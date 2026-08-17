@@ -1,0 +1,27 @@
+@routes_bp.route('/admin')
+@routes_bp.route('/admin/dashboard')
+def admin_dashboard():
+    """Tableau de bord administrateur"""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('auth.admin_login'))
+    
+    # Récupérer toutes les données
+    stagiaires = Stagiaire.query.all()
+    pointages = Pointage.query.all()
+    aujourdhui = datetime.now().date()
+    
+    # Calculer les statistiques
+    stats = {
+        'total_stagiaires': len(stagiaires),
+        'total_pointages': len(pointages),
+        'presents_aujourdhui': len([p for p in pointages if p.date == aujourdhui]),
+        'absences_non_justifiees': Absence.query.filter_by(justifiee=False).count()
+    }
+    
+    # Passer toutes les variables au template
+    return render_template('admin.html',
+        stagiaires=stagiaires,
+        pointages=pointages,
+        stats=stats,
+        today=aujourdhui  # Pour les comparaisons de date
+    )

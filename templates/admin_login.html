@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Connexion{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:40px auto;">
+    <div class="card">
+        <div class="card-header">
+            <h2>🔐 Accès Administrateur</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('auth.admin_login') }}">
+                <div class="form-group">
+                    <label>Mot de passe administrateur</label>
+                    <input type="password" name="password" placeholder="Mot de passe admin" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+                    Se connecter
+                </button>
+            </form>
+            <div style="margin-top:16px;text-align:center;font-size:0.85rem;color:var(--ink-soft);">
+                <a href="{{ url_for('auth.login') }}" style="color:var(--primary);">← Retour à la connexion stagiaire</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification de Stage - PHENIX Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .document-container {
+            background: white;
+            max-width: 850px;
+            width: 100%;
+            padding: 45px 50px;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+            border: 2px solid #2e7d32;
+            position: relative;
+        }
+        .document-container::before {
+            content: "PHENIX MANAGEMENT";
+            position: absolute;
+            top: 18px;
+            right: 30px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #2e7d32;
+            letter-spacing: 1.5px;
+            opacity: 0.5;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2e7d32;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .header .logo-text {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a2e1a;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .header .logo-sub {
+            color: #4a6a4a;
+            font-size: 12px;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+        .header .logo-line {
+            display: inline-block;
+            width: 60px;
+            height: 3px;
+            background: #2e7d32;
+            margin-top: 6px;
+        }
+        .title {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            text-transform: uppercase;
+            color: #1a2e1a;
+            margin: 20px 0 10px;
+            letter-spacing: 2px;
+        }
+        .ref {
+            font-size: 13px;
+            color: #666;
+            margin: 10px 0 20px;
+            padding: 8px 12px;
+            background: #f8faf8;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .ref strong { color: #1a2e1a; }
+        .content p {
+            line-height: 1.9;
+            margin-bottom: 14px;
+            color: #2d2d2d;
+            font-size: 14px;
+        }
+        .content .highlight {
+            color: #2e7d32;
+            font-weight: 700;
+        }
+        .content .underline {
+            text-decoration: underline;
+        }
+        .info-block {
+            background: #f8faf8;
+            border-left: 4px solid #2e7d32;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-block .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 14px;
+            border-bottom: 1px dashed #e8f5e9;
+        }
+        .info-block .row:last-child { border-bottom: none; }
+        .info-block .label { font-weight: 600; color: #1a2e1a; }
+        .signature {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 1px solid #ddd;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        .signature .right { text-align: right; }
+        .signature .line {
+            display: inline-block;
+            width: 200px;
+            border-bottom: 1px solid #333;
+            margin-top: 30px;
+        }
+        .signature .label-sig {
+            font-size: 11px;
+            color: #888;
+            margin-top: 6px;
+        }
+        .signature .title-sig {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .btn-print {
+            display: block;
+            width: 220px;
+            margin: 25px auto 0;
+            padding: 12px 24px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-print:hover { background: #1b5e20; }
+        @media print {
+            body { background: white; padding: 0; }
+            .document-container { box-shadow: none; border: none; padding: 30px; }
+            .btn-print { display: none; }
+        }
+        @media (max-width: 600px) {
+            .document-container { padding: 20px; }
+            .signature { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+            .signature .right { text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="document-container">
+        <div class="header">
+            <div class="logo-text">PHENIX MANAGEMENT</div>
+            <div class="logo-sub">Management - Finances - Fiscalité - Controle de Gestion - Etudes et Formations - Conseils - Conceptions de logiciels - Informatiqu</div>
+            <div class="logo-line"></div>
+        </div>
+
+        <div class="title">Notification de Stage</div>
+
+        <div class="ref">
+            <strong>Réf :</strong> {{ reference }}
+        </div>
+
+        <div class="content">
+            <p>
+                <strong>{{ stagiaire.get_genre_complet() }} {{ stagiaire.prenom }} {{ stagiaire.nom }},</strong>
+            </p>
+
+            <p>
+                Suite à notre entretien en date du <strong>{{ date_aujourdhui }}</strong> relatif à votre demande 
+                de stage <strong>{{ type_stage }}</strong> au sein de notre cabinet, par la présente, 
+                nous avons le plaisir de vous annoncer que votre demande a été <span class="highlight">accordée</span>.
+            </p>
+
+            <div class="info-block">
+                <div class="row">
+                    <span class="label">📅 Période de stage</span>
+                    <span><strong>{{ stagiaire.date_debut.strftime('%d %B %Y') }}</strong> → <strong>{{ stagiaire.date_fin.strftime('%d %B %Y') }}</strong></span>
+                </div>
+                <div class="row">
+                    <span class="label">📋 Type de stage</span>
+                    <span><strong>{{ type_stage|capitalize }}</strong></span>
+                </div>
+                <div class="row">
+                    <span class="label">👤 Stagiaire</span>
+                    <span>{{ stagiaire.prenom }} {{ stagiaire.nom }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">📧 Email</span>
+                    <span>{{ stagiaire.email }}</span>
+                </div>
+            </div>
+
+            <p>
+                Nous vous rappelons par ailleurs que votre stage <strong>non rémunéré</strong> d'une durée de 
+                <strong>trois (03) mois</strong>, commencera le <span class="underline"><strong>{{ stagiaire.date_debut.strftime('%d %B %Y') }}</strong></span> 
+                et finira le <span class="underline"><strong>{{ stagiaire.date_fin.strftime('%d %B %Y') }}</strong></span>.
+            </p>
+
+            <p>
+                Vous pouvez donc intégrer notre équipe aux dates mentionnées ci-dessus afin d'y effectuer 
+                votre stage <strong>{{ type_stage }}</strong>.
+            </p>
+
+            <p style="margin-top:16px;font-size:13px;color:#666;">
+                Veuillez recevoir, {{ stagiaire.get_genre_complet() }}, l'expression de nos salutations distinguées.
+            </p>
+        </div>
+
+        <div class="signature">
+            <div></div>
+            <div class="right">
+                <div class="title-sig">Rolland DOKPO</div>
+                <div style="font-size:13px;color:#666;">Directeur Technique</div>
+                <div class="line"></div>
+                <div class="label-sig">Pour PHENIX Management</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            PHENIX Management • Marqueterie - Épices - Confiture • Cotonou, Bénin
+        </div>
+
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
+    </div>
+
+    <script>
+        setTimeout(function() { window.print(); }, 1500);
+    </script>
+</body>
+</html>

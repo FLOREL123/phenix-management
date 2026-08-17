@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PHENIX Management{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== VARIABLES - COULEUR ORANGE ===== */
+        :root {
+            --primary: #E67E22;
+            --primary-dark: #D35400;
+            --primary-light: #FDEBD0;
+            --primary-50: #FEF5E7;
+            --bg: #f8faf8;
+            --surface: #ffffff;
+            --ink: #1a2e1a;
+            --ink-soft: #4a6a4a;
+            --border: #d0d7d0;
+            --radius: 12px;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+            --shadow-hover: 0 4px 24px rgba(230, 126, 34, 0.15);
+            --transition: 0.3s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--surface);
+            border-bottom: 2px solid var(--primary);
+            padding: 12px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 50px;
+            width: auto;
+        }
+
+        .logo span { color: var(--ink); }
+
+        .header-description {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header-description .desc-text {
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+            font-weight: 500;
+        }
+
+        .header-description .separator {
+            color: var(--border);
+            font-size: 1.2rem;
+        }
+
+        .header-content nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--ink);
+            font-size: 0.9rem;
+        }
+
+        /* ===== BOUTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--ink);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover { background: var(--bg); }
+
+        .btn-success { background: #27ae60; color: #fff; }
+        .btn-success:hover { background: #219a52; }
+
+        .btn-danger { background: #e74c3c; color: #fff; }
+        .btn-danger:hover { background: #c0392b; }
+
+        .btn-warning { background: var(--primary); color: #fff; }
+        .btn-warning:hover { background: var(--primary-dark); }
+
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+        .btn-lg { padding: 14px 32px; font-size: 1.1rem; }
+
+        /* ===== CARTES ===== */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            padding: 16px 24px;
+            background: var(--primary-50);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-header h2 {
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+        }
+
+        .card-body { padding: 24px; }
+
+        /* ===== FORMULAIRES ===== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--ink-soft);
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.12);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* ===== ALERTES ===== */
+        .alert {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .alert-success { background: #e8f5e9; color: #1b5e20; border-left: 4px solid #27ae60; }
+        .alert-danger { background: #fce4ec; color: #c62828; border-left: 4px solid #e74c3c; }
+        .alert-warning { background: #fdebd0; color: #e65100; border-left: 4px solid var(--primary); }
+        .alert-info { background: #e3f2fd; color: #0d47a1; border-left: 4px solid #2196f3; }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px 0;
+            color: var(--ink-soft);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .header-content { flex-direction: column; }
+            .card-header { flex-direction: column; text-align: center; }
+            .header-description { justify-content: center; }
+        }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            border-top: 4px solid var(--primary);
+        }
+
+        .stat-card .number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: var(--ink-soft);
+        }
+
+        /* ===== BADGE ===== */
+        .badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-success { background: #e8f5e9; color: #1b5e20; }
+        .badge-danger { background: #fce4ec; color: #c62828; }
+        .badge-warning { background: #fdebd0; color: #e65100; }
+        .badge-info { background: #e3f2fd; color: #0d47a1; }
+        .badge-primary { background: var(--primary-50); color: var(--primary-dark); }
+
+        /* ===== TABLEAU ===== */
+        .table-responsive { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 12px 12px 0;
+            font-weight: 600;
+            color: var(--ink-soft);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 12px 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--ink-soft);
+        }
+
+        .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .actions .btn { padding: 4px 12px; font-size: 0.75rem; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--surface);
+            max-width: 600px;
+            width: 100%;
+            border-radius: var(--radius);
+            box-shadow: 0 40px 60px rgba(0,0,0,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 1;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--ink-soft);
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+        .modal-close:hover { background: var(--bg); }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                    <a href="{{ url_for('routes.dashboard') }}" class="logo">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="PHENIX MANAGEMENT">
+                        <span>PHENIX MANAGEMENT</span>
+                    </a>
+                    <div class="header-description">
+                        <span class="desc-text">Management - Finances - Fiscalité</span>
+                        <span class="separator">|</span>
+                        <span class="desc-text">Contrôle de Gestion</span>
+                        <span class="separator">|</span>
+                        <span class="desc-text">Études et Formations</span>
+                        <span class="separator">|</span>
+                        <span class="desc-text">Conseils</span>
+                        <span class="separator">|</span>
+                        <span class="desc-text">Conception de logiciels</span>
+                        <span class="separator">|</span>
+                        <span class="desc-text">Informatique</span>
+                    </div>
+                </div>
+                <nav>
+                    {% if current_user.is_authenticated %}
+                        <span class="user-name">👋 {{ current_user.prenom }} {{ current_user.nom }}</span>
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm">🚪 Déconnexion</a>
+                    {% elif session.get('admin_logged_in') %}
+                        <span class="user-name">👋 Administrateur</span>
+                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm">🚪 Déconnexion</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container" style="padding-top:24px;padding-bottom:24px;">
+            <!-- Messages flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div id="message-container"></div>
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 PHENIX Management - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        function afficherMessage(message, type) {
+            const container = document.getElementById('message-container');
+            if (!container) return;
+
+            const div = document.createElement('div');
+            div.className = `alert alert-${type}`;
+            div.textContent = message;
+            container.appendChild(div);
+
+            setTimeout(() => {
+                div.style.opacity = '0';
+                div.style.transition = 'opacity 0.5s';
+                setTimeout(() => div.remove(), 500);
+            }, 5000);
+        }
+
+        function closeModal() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                closeModal();
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

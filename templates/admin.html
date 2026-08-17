@@ -1,0 +1,685 @@
+{% extends "base.html" %}
+
+{% block title %}Administration - PHENIX MANAGEMENT{% endblock %}
+
+{% block content %}
+<div id="message-container"></div>
+
+<!-- En-tête -->
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+    <div>
+        <h1 style="font-size:1.8rem;">📊 Administration</h1>
+        <p style="color:var(--ink-soft);">Gestion complète des stagiaires</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="openAddModal()" style="font-size:1rem;padding:12px 24px;">
+            ➕ Ajouter un stagiaire
+        </button>
+        <a href="{{ url_for('routes.admin_dashboard') }}" class="btn btn-outline">🔄 Actualiser</a>
+        <button onclick="exportPDF()" class="btn btn-success">📄 Exporter PDF</button>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ stats.total_stagiaires }}</div>
+        <div class="label">👨‍🎓 Stagiaires</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.total_pointages }}</div>
+        <div class="label">📋 Pointages</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.presents_aujourdhui }}</div>
+        <div class="label">✅ Présents aujourd'hui</div>
+    </div>
+</div>
+
+<!-- Filtre par période -->
+<div class="card">
+    <div class="card-header">
+        <h2>📅 Filtre par période</h2>
+    </div>
+    <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+            <div class="form-group" style="flex:1 1 150px;margin-bottom:0;">
+                <label>Date début</label>
+                <input type="date" id="periodeDateDebut" value="{{ today.replace(day=1).strftime('%Y-%m-%d') }}">
+            </div>
+            <div class="form-group" style="flex:1 1 150px;margin-bottom:0;">
+                <label>Date fin</label>
+                <input type="date" id="periodeDateFin" value="{{ today.strftime('%Y-%m-%d') }}">
+            </div>
+            <button class="btn btn-primary" onclick="filtrerParPeriode()">🔍 Filtrer</button>
+            <button class="btn btn-outline" onclick="reinitialiserPeriode()">🔄 Réinitialiser</button>
+            <button class="btn btn-success" onclick="exporterPDFListe()">📄 Exporter PDF</button>
+        </div>
+        <div style="margin-top:10px;font-size:0.85rem;color:var(--ink-soft);">
+            <span id="periodeInfo">📅 Affiche tous les stagiaires. Sélectionnez une période pour filtrer.</span>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des stagiaires -->
+<div class="card">
+    <div class="card-header">
+        <h2>📋 Liste des stagiaires</h2>
+        <span style="color:var(--ink-soft);font-size:0.9rem;">
+            <span id="stagiaireCount">{{ stagiaires|length }}</span> stagiaire(s)
+            <span id="periodeAffichage" style="font-size:0.8rem;color:var(--ink-soft);margin-left:10px;"></span>
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Matricule</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Email</th>
+                        <th>Type de stage</th>
+                        <th>Période</th>
+                        <th>Dossiers</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="stagiairesTable">
+                    {% if stagiaires %}
+                        {% for s in stagiaires %}
+                        <tr data-id="{{ s.id }}">
+                            <td>{{ loop.index }}</td>
+                            <td><strong>{{ s.matricule }}</strong></td>
+                            <td>{{ s.nom }}</td>
+                            <td>{{ s.prenom }}</td>
+                            <td>{{ s.email }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'info' if s.type_stage == 'professionnel' else 'primary' }}">
+                                    {{ s.type_stage }}
+                                </span>
+                            </td>
+                            <td>{{ s.date_debut.strftime('%d/%m/%Y') }} → {{ s.date_fin.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if s.dossiers_deposes else 'danger' }}">
+                                    {{ '✅ Oui' if s.dossiers_deposes else '❌ Non' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <!-- ✏️ MODIFIER -->
+                                    <button class="btn btn-sm btn-primary" onclick="editStagiaire({{ s.id }})" title="Modifier">✏️</button>
+                                    
+                                    <!-- 📄 NOTIFICATION - visible si dossiers déposés -->
+                                    {% if s.dossiers_deposes %}
+                                        <button class="btn btn-sm btn-warning" onclick="genererNotification({{ s.id }})" title="Générer la notification de stage">📄 Notif</button>
+                                    {% endif %}
+                                    
+                                    <!-- 📜 ATTESTATION - visible si dossiers déposés -->
+                                    {% if s.dossiers_deposes %}
+                                        <button class="btn btn-sm btn-success" onclick="genererAttestation({{ s.id }})" title="Générer l'attestation de fin de stage">📜 Attest</button>
+                                    {% endif %}
+                                    
+                                    <!-- 🗑️ SUPPRIMER -->
+                                    <button class="btn btn-sm btn-danger" onclick="deleteStagiaire({{ s.id }})" title="Supprimer">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr><td colspan="9" class="empty">Aucun stagiaire enregistré</td></tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Présences du jour -->
+<div class="card" style="margin-top:20px;">
+    <div class="card-header">
+        <h2>📍 Présences du jour - {{ today.strftime('%d/%m/%Y') }}</h2>
+        <button class="btn btn-sm btn-outline" onclick="chargerPresences()">🔄 Actualiser</button>
+    </div>
+    <div class="card-body">
+        <div id="presencesContainer">
+            <p style="color:var(--ink-soft);">Chargement des présences...</p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL AJOUT/MODIFICATION -->
+<div class="modal-overlay" id="modalStagiaire">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">➕ Ajouter un stagiaire</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="card-body">
+            <form id="stagiaireForm" onsubmit="saveStagiaire(event)">
+                <input type="hidden" id="editId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Matricule *</label>
+                        <input type="text" id="formMatricule" required placeholder="Ex: STU006">
+                    </div>
+                    <div class="form-group">
+                        <label>Genre *</label>
+                        <select id="formGenre" required>
+                            <option value="M.">M.</option>
+                            <option value="Mme">Mme</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nom *</label>
+                        <input type="text" id="formNom" required placeholder="Ex: KOUASSI">
+                    </div>
+                    <div class="form-group">
+                        <label>Prénom *</label>
+                        <input type="text" id="formPrenom" required placeholder="Ex: Marie">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email *</label>
+                        <input type="email" id="formEmail" required placeholder="marie@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Téléphone</label>
+                        <input type="text" id="formTelephone" placeholder="+229 67 89 01 23">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Mot de passe *</label>
+                        <input type="password" id="formPassword" required placeholder="Code PIN à 4 chiffres">
+                    </div>
+                    <div class="form-group">
+                        <label>Adresse</label>
+                        <input type="text" id="formAdresse" placeholder="Cotonou, Bénin">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type de stage *</label>
+                        <select id="formType" required>
+                            <option value="">-- Choisir --</option>
+                            <option value="professionnel">Professionnel</option>
+                            <option value="academique">Académique</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Dossiers déposés</label>
+                        <select id="formDossiers">
+                            <option value="false">Non</option>
+                            <option value="true">Oui</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date début *</label>
+                        <input type="date" id="formDateDebut" required onchange="calculerDateFin()">
+                    </div>
+                    <div class="form-group">
+                        <label>Durée du stage</label>
+                        <select id="formDuree" onchange="calculerDateFin()">
+                            <option value="1">1 mois</option>
+                            <option value="2">2 mois</option>
+                            <option value="3" selected>3 mois</option>
+                            <option value="4">4 mois</option>
+                            <option value="5">5 mois</option>
+                            <option value="6">6 mois</option>
+                            <option value="12">12 mois</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Date fin (automatique)</label>
+                        <input type="date" id="formDateFin" readonly style="background:#f5f5f5;">
+                    </div>
+                </div>
+                
+                <div style="margin-top:20px;display:flex;gap:12px;justify-content:flex-end;">
+                    <button type="button" class="btn" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================================
+// CALCULER LA DATE DE FIN AUTOMATIQUEMENT
+// ============================================================
+function calculerDateFin() {
+    const dateDebut = document.getElementById('formDateDebut').value;
+    const duree = parseInt(document.getElementById('formDuree').value);
+    
+    if (dateDebut && duree) {
+        const date = new Date(dateDebut);
+        date.setMonth(date.getMonth() + duree);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        document.getElementById('formDateFin').value = `${year}-${month}-${day}`;
+    }
+}
+
+// ============================================================
+// OUVRIRE LE MODAL D'AJOUT
+// ============================================================
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = '➕ Ajouter un stagiaire';
+    document.getElementById('editId').value = '';
+    document.getElementById('stagiaireForm').reset();
+    document.getElementById('formPassword').required = true;
+    document.getElementById('formPassword').placeholder = 'Code PIN à 4 chiffres';
+    document.getElementById('formDateFin').value = '';
+    document.getElementById('modalStagiaire').classList.add('active');
+}
+
+// ============================================================
+// MODIFIER UN STAGIAIRE
+// ============================================================
+function editStagiaire(id) {
+    fetch('/api/admin/stagiaires')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur réseau: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const s = data.find(item => item.id === id);
+            
+            if (!s) {
+                alert('❌ Stagiaire non trouvé');
+                return;
+            }
+            
+            document.getElementById('modalTitle').textContent = '✏️ Modifier le stagiaire';
+            document.getElementById('editId').value = s.id;
+            document.getElementById('formMatricule').value = s.matricule || '';
+            document.getElementById('formNom').value = s.nom || '';
+            document.getElementById('formPrenom').value = s.prenom || '';
+            document.getElementById('formGenre').value = s.genre || 'M.';
+            document.getElementById('formEmail').value = s.email || '';
+            document.getElementById('formTelephone').value = s.telephone || '';
+            document.getElementById('formAdresse').value = s.adresse || '';
+            document.getElementById('formType').value = s.type_stage || '';
+            document.getElementById('formDossiers').value = s.dossiers_deposes ? 'true' : 'false';
+            
+            if (s.date_debut) {
+                const parts = s.date_debut.split('/');
+                if (parts.length === 3) {
+                    document.getElementById('formDateDebut').value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+            if (s.date_fin) {
+                const parts = s.date_fin.split('/');
+                if (parts.length === 3) {
+                    document.getElementById('formDateFin').value = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+            }
+            
+            if (s.date_debut && s.date_fin) {
+                const debutParts = s.date_debut.split('/');
+                const finParts = s.date_fin.split('/');
+                if (debutParts.length === 3 && finParts.length === 3) {
+                    const debut = new Date(`${debutParts[2]}-${debutParts[1]}-${debutParts[0]}`);
+                    const fin = new Date(`${finParts[2]}-${finParts[1]}-${finParts[0]}`);
+                    const moisDiff = (fin.getFullYear() - debut.getFullYear()) * 12 + (fin.getMonth() - debut.getMonth());
+                    document.getElementById('formDuree').value = moisDiff > 0 ? moisDiff : 3;
+                }
+            }
+            
+            document.getElementById('formPassword').required = false;
+            document.getElementById('formPassword').placeholder = 'Laisser vide pour ne pas changer';
+            document.getElementById('modalStagiaire').classList.add('active');
+        })
+        .catch(error => {
+            console.error('❌ Erreur:', error);
+            alert('❌ Erreur de chargement du stagiaire: ' + error.message);
+        });
+}
+
+// ============================================================
+// SAUVEGARDER LE STAGIAIRE (AJOUT OU MODIFICATION)
+// ============================================================
+function saveStagiaire(event) {
+    event.preventDefault();
+    
+    const id = document.getElementById('editId').value;
+    const dateFin = document.getElementById('formDateFin').value;
+    
+    if (!dateFin) {
+        alert('⚠️ Veuillez calculer la date de fin en sélectionnant la durée.');
+        return;
+    }
+    
+    const data = {
+        matricule: document.getElementById('formMatricule').value,
+        nom: document.getElementById('formNom').value,
+        prenom: document.getElementById('formPrenom').value,
+        genre: document.getElementById('formGenre').value,
+        email: document.getElementById('formEmail').value,
+        telephone: document.getElementById('formTelephone').value,
+        adresse: document.getElementById('formAdresse').value,
+        type_stage: document.getElementById('formType').value,
+        dossiers_deposes: document.getElementById('formDossiers').value === 'true',
+        date_debut: document.getElementById('formDateDebut').value,
+        date_fin: dateFin,
+        password: document.getElementById('formPassword').value
+    };
+
+    const method = id ? 'PUT' : 'POST';
+    const url = id ? `/api/admin/stagiaires/${id}` : '/api/admin/stagiaires';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Erreur serveur: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(result => {
+        if (result.success) {
+            afficherMessage('✅ ' + result.message, 'success');
+            closeModal();
+            
+            if (result.id) {
+                // Rediriger vers la page after_save pour les nouveaux stagiaires
+                setTimeout(() => {
+                    window.location.href = `/admin/stagiaire/after-save/${result.id}`;
+                }, 1000);
+            } else {
+                // Pour les modifications, recharger la page
+                setTimeout(() => window.location.reload(), 1500);
+            }
+        } else {
+            afficherMessage('❌ ' + result.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('❌ Erreur:', error);
+        afficherMessage('❌ Erreur lors de l\'enregistrement: ' + error.message, 'danger');
+    });
+}
+
+// ============================================================
+// SUPPRIMER UN STAGIAIRE
+// ============================================================
+function deleteStagiaire(id) {
+    if (!confirm('Voulez-vous vraiment supprimer ce stagiaire ?')) return;
+
+    fetch(`/api/admin/stagiaires/${id}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            afficherMessage('✅ ' + result.message, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            afficherMessage('❌ ' + result.message, 'danger');
+        }
+    });
+}
+
+// ============================================================
+// GÉNÉRER LA NOTIFICATION DE STAGE
+// ============================================================
+function genererNotification(id) {
+    window.open(`/admin/notification/${id}`, '_blank');
+}
+
+// ============================================================
+// GÉNÉRER L'ATTESTATION DE FIN DE STAGE
+// ============================================================
+function genererAttestation(id) {
+    window.open(`/admin/attestation/${id}`, '_blank');
+}
+
+// ============================================================
+// EXPORT PDF
+// ============================================================
+function exportPDF() {
+    window.open('/admin/export/pdf', '_blank');
+}
+
+// ============================================================
+// EXPORTER LA LISTE EN PDF
+// ============================================================
+function exporterPDFListe() {
+    const dateDebut = document.getElementById('periodeDateDebut').value;
+    const dateFin = document.getElementById('periodeDateFin').value;
+    
+    if (!dateDebut || !dateFin) {
+        alert('⚠️ Veuillez sélectionner une période avant d\'exporter.');
+        return;
+    }
+    
+    let url = '/admin/export/stagiaires-pdf?';
+    if (dateDebut) url += `date_debut=${dateDebut}&`;
+    if (dateFin) url += `date_fin=${dateFin}&`;
+    
+    window.open(url, '_blank');
+}
+
+// ============================================================
+// FILTRER PAR PÉRIODE
+// ============================================================
+function filtrerParPeriode() {
+    const dateDebut = document.getElementById('periodeDateDebut').value;
+    const dateFin = document.getElementById('periodeDateFin').value;
+    
+    if (!dateDebut || !dateFin) {
+        alert('⚠️ Veuillez sélectionner une date de début et une date de fin.');
+        return;
+    }
+    
+    if (dateDebut > dateFin) {
+        alert('⚠️ La date de début doit être antérieure à la date de fin.');
+        return;
+    }
+    
+    const tbody = document.getElementById('stagiairesTable');
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--ink-soft);">⏳ Chargement...</td></tr>';
+    
+    let url = `/api/admin/stagiaires/periode?date_debut=${dateDebut}&date_fin=${dateFin}`;
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur serveur: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const countSpan = document.getElementById('stagiaireCount');
+            if (countSpan) {
+                countSpan.textContent = data.length;
+            }
+            
+            const debutFormate = new Date(dateDebut + 'T00:00:00').toLocaleDateString('fr-FR');
+            const finFormate = new Date(dateFin + 'T00:00:00').toLocaleDateString('fr-FR');
+            
+            const periodeAff = document.getElementById('periodeAffichage');
+            if (periodeAff) {
+                periodeAff.textContent = `(du ${debutFormate} au ${finFormate})`;
+            }
+            
+            const periodeInfo = document.getElementById('periodeInfo');
+            if (periodeInfo) {
+                periodeInfo.textContent = `📅 Période : du ${debutFormate} au ${finFormate} (${data.length} stagiaire(s))`;
+            }
+            
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="empty">📭 Aucun stagiaire actif du ${debutFormate} au ${finFormate}</td></tr>`;
+                return;
+            }
+            
+            let html = '';
+            let numero = 1;
+            data.forEach(s => {
+                const typeLabel = s.type_stage === 'professionnel' ? 'Professionnel' : 'Académique';
+                const typeClass = s.type_stage === 'professionnel' ? 'info' : 'primary';
+                
+                html += `
+                    <tr data-id="${s.id}">
+                        <td>${numero}</td>
+                        <td><strong>${s.matricule}</strong></td>
+                        <td>${s.nom}</td>
+                        <td>${s.prenom}</td>
+                        <td>${s.email}</td>
+                        <td>
+                            <span class="badge badge-${typeClass}">
+                                ${typeLabel}
+                            </span>
+                        </td>
+                        <td>${s.date_debut} → ${s.date_fin}</td>
+                        <td>
+                            <span class="badge badge-${s.dossiers_deposes ? 'success' : 'danger'}">
+                                ${s.dossiers_deposes ? '✅' : '❌'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-sm btn-primary" onclick="editStagiaire(${s.id})">✏️</button>
+                                ${s.dossiers_deposes ? 
+                                    `<button class="btn btn-sm btn-warning" onclick="genererNotification(${s.id})">📄 Notif</button>` : ''}
+                                ${s.dossiers_deposes ? 
+                                    `<button class="btn btn-sm btn-success" onclick="genererAttestation(${s.id})">📜 Attest</button>` : ''}
+                                <button class="btn btn-sm btn-danger" onclick="deleteStagiaire(${s.id})">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                numero++;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('❌ Erreur:', error);
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:red;">❌ Erreur: ${error.message}</td></tr>`;
+        });
+}
+
+// ============================================================
+// RÉINITIALISER LE FILTRE PÉRIODE
+// ============================================================
+function reinitialiserPeriode() {
+    window.location.reload();
+}
+
+// ============================================================
+// PRÉSENCES DU JOUR
+// ============================================================
+function chargerPresences() {
+    const container = document.getElementById('presencesContainer');
+    if (!container) return;
+    
+    container.innerHTML = '<p style="color:var(--ink-soft);">Chargement...</p>';
+    
+    fetch('/api/admin/presences')
+        .then(response => response.json())
+        .then(data => {
+            if (data.length === 0) {
+                container.innerHTML = '<p class="empty">Aucune présence enregistrée aujourd\'hui.</p>';
+                return;
+            }
+            
+            let html = `
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Matricule</th>
+                                <th>Stagiaire</th>
+                                <th>Arrivée</th>
+                                <th>Départ</th>
+                                <th>Statut</th>
+                                <th>📍 Localisation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            data.forEach(p => {
+                const localisation = p.latitude && p.longitude ? 
+                    `<a href="https://www.google.com/maps?q=${p.latitude},${p.longitude}" target="_blank" style="color:var(--primary);">
+                        📍 ${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)}
+                    </a>` : 
+                    '❌ Non disponible';
+                
+                html += `
+                    <tr>
+                        <td><strong>${p.matricule}</strong></td>
+                        <td>${p.stagiaire}</td>
+                        <td>${p.heure_arrivee}</td>
+                        <td>${p.heure_depart}</td>
+                        <td><span class="badge badge-success">${p.statut}</span></td>
+                        <td style="font-size:0.8rem;">${localisation}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:10px;font-size:0.8rem;color:var(--ink-soft);">
+                    📍 Cliquez sur les coordonnées pour voir la localisation sur Google Maps
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        })
+        .catch(() => {
+            container.innerHTML = '<p style="color:red;">❌ Erreur de chargement des présences</p>';
+        });
+}
+
+// ============================================================
+// FERMER LES MODALS
+// ============================================================
+function closeModal() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal-overlay')) {
+        closeModal();
+    }
+});
+
+// ============================================================
+// CHARGEMENT INITIAL
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    chargerPresences();
+    
+    document.getElementById('formDateDebut').addEventListener('change', calculerDateFin);
+    document.getElementById('formDuree').addEventListener('change', calculerDateFin);
+});
+</script>
+{% endblock %}

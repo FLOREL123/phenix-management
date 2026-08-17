@@ -1,0 +1,15 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.2
+Flask-Migrate==4.0.5
+Flask-WTF==1.2.1
+WTForms==3.1.1
+python-dotenv==1.0.0
+bcrypt==4.1.2
+reportlab==4.2.0
+weasyprint==61.2
+flask-mail==0.9.1
+apscheduler==3.10.4
+qrcode==7.4.2
+# Pillow==10.2.0  # Commenté
+# psycopg2-binary==2.9.9  # Supprimé - on utilise SQLite

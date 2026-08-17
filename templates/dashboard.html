@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Mon espace - PHENIX MANAGEMENT{% endblock %}
+
+{% block extra_css %}
+<style>
+    .heure-actuelle {
+        text-align: center;
+        padding: 16px;
+        background: var(--primary-light);
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    .heure-actuelle .heure {
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+    .heure-actuelle .date {
+        color: var(--ink-soft);
+        font-size: 1rem;
+    }
+
+    .pointage-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    .pointage-card {
+        background: var(--surface);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        padding: 30px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition);
+    }
+    .pointage-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
+    .pointage-card .icon { font-size: 48px; display: block; margin-bottom: 10px; }
+    .pointage-card .label { font-weight: 600; font-size: 1rem; }
+    .pointage-card .time { font-size: 0.85rem; color: var(--ink-soft); margin-top: 4px; }
+
+    .alerte-fin-stage {
+        background: #fff3e0;
+        border: 1px solid #ffcc80;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .alerte-fin-stage .message { color: #e65100; font-weight: 500; }
+    .alerte-fin-stage .countdown { background: #e65100; color: white; padding: 4px 16px; border-radius: 999px; font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="message-container"></div>
+
+<!-- Alerte fin de stage -->
+{% if jours_restants is not none and jours_restants <= 10 %}
+<div class="alerte-fin-stage">
+    <div class="message">
+        📢 <strong>Attention !</strong> Votre stage se termine dans 
+        <strong>{{ jours_restants }} jours</strong>.
+        Pensez à déposer vos documents physiques.
+    </div>
+    <div class="countdown">{{ jours_restants }} jours restants</div>
+</div>
+{% endif %}
+
+<!-- Heure actuelle -->
+<div class="heure-actuelle">
+    <div class="heure" id="horloge">--:--</div>
+    <div class="date" id="date-jour"></div>
+</div>
+
+<!-- Pointage -->
+<div class="card">
+    <div class="card-header">
+        <h2>📋 Pointage</h2>
+        <span class="badge badge-info">📍 Géolocalisation requise</span>
+    </div>
+    <div class="card-body">
+        <div class="pointage-grid">
+            <div class="pointage-card" onclick="pointer('arrivee')">
+                <span class="icon">✅</span>
+                <div class="label">Arrivée</div>
+                <div class="time" id="derniere-arrivee">
+                    {% if dernier_pointage and dernier_pointage.heure_arrivee %}
+                        Dernier: {{ dernier_pointage.heure_arrivee.strftime('%H:%M') }}
+                    {% else %}
+                        Non pointé
+                    {% endif %}
+                </div>
+                <button class="btn btn-success btn-sm" id="btn-arrivee" style="margin-top:10px;width:100%;justify-content:center;">
+                    Pointer arrivée
+                </button>
+            </div>
+            
+            <div class="pointage-card" onclick="pointer('depart')">
+                <span class="icon">🚪</span>
+                <div class="label">Départ</div>
+                <div class="time" id="derniere-depart">
+                    {% if dernier_pointage and dernier_pointage.heure_depart %}
+                        Dernier: {{ dernier_pointage.heure_depart.strftime('%H:%M') }}
+                    {% else %}
+                        Non pointé
+                    {% endif %}
+                </div>
+                <button class="btn btn-danger btn-sm" id="btn-depart" style="margin-top:10px;width:100%;justify-content:center;">
+                    Pointer départ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="number">{{ stats.total_pointages }}</div>
+        <div class="label">Total pointages</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.presences }}</div>
+        <div class="label">Jours présents</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ stats.absences }}</div>
+        <div class="label">Absences</div>
+    </div>
+    <div class="stat-card">
+        <div class="number">{{ jours_restants or 0 }}</div>
+        <div class="label">Jours restants</div>
+    </div>
+</div>
+
+<!-- Historique -->
+<div class="card">
+    <div class="card-header">
+        <h2>📜 Historique des pointages</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Arrivée</th>
+                        <th>Départ</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in pointages[:10] %}
+                    <tr>
+                        <td>{{ p.date.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ p.heure_arrivee.strftime('%H:%M') if p.heure_arrivee else '-' }}</td>
+                        <td>{{ p.heure_depart.strftime('%H:%M') if p.heure_depart else '-' }}</td>
+                        <td>
+                            <span class="badge badge-{{ 'success' if p.statut == 'Présent' else 'danger' }}">
+                                {{ p.statut or 'Absent' }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="empty">Aucun pointage</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Horloge en temps réel
+    function mettreAJourHorloge() {
+        const maintenant = new Date();
+        const heures = String(maintenant.getHours()).padStart(2, '0');
+        const minutes = String(maintenant.getMinutes()).padStart(2, '0');
+        document.getElementById('horloge').textContent = heures + ':' + minutes;
+        
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('date-jour').textContent = maintenant.toLocaleDateString('fr-FR', options);
+    }
+    mettreAJourHorloge();
+    setInterval(mettreAJourHorloge, 30000);
+
+    // Fonction de géolocalisation
+    function getLocation() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject('Géolocalisation non supportée');
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    let message = 'Erreur de géolocalisation';
+                    if (error.code === 1) message = '❌ Autorisation refusée';
+                    else if (error.code === 2) message = '❌ Position non disponible';
+                    else if (error.code === 3) message = '❌ Délai dépassé';
+                    reject(message);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+        });
+    }
+
+    // Fonction de pointage
+    function pointer(type) {
+        const btnId = type === 'arrivee' ? 'btn-arrivee' : 'btn-depart';
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ En cours...';
+        }
+
+        getLocation().then(position => {
+            fetch('/api/pointer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: type,
+                    latitude: position.latitude,
+                    longitude: position.longitude
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    afficherMessage('✅ ' + data.message, 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    afficherMessage('❌ ' + data.message, 'danger');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = type === 'arrivee' ? '✅ Arrivée' : '🚪 Départ';
+                    }
+                }
+            })
+            .catch(() => {
+                afficherMessage('❌ Erreur de connexion', 'danger');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = type === 'arrivee' ? '✅ Arrivée' : '🚪 Départ';
+                }
+            });
+        }).catch(error => {
+            afficherMessage('❌ ' + error, 'danger');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = type === 'arrivee' ? '✅ Arrivée' : '🚪 Départ';
+            }
+        });
+    }
+</script>
+{% endblock %}

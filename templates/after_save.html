@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Stagiaire enregistré - PHENIX MANAGEMENT{% endblock %}
+
+{% block content %}
+<div style="max-width:700px;margin:0 auto;text-align:center;">
+    
+    <!-- Icône de succès -->
+    <div style="font-size:80px;margin:20px 0;">
+        ✅
+    </div>
+    
+    <h1 style="font-size:2rem;color:#1a2e1a;margin-bottom:10px;">
+        Stagiaire enregistré avec succès !
+    </h1>
+    
+    <p style="color:var(--ink-soft);font-size:1.1rem;margin-bottom:30px;">
+        {{ stagiaire.prenom }} {{ stagiaire.nom }} a été ajouté à la base de données.
+    </p>
+    
+    <!-- Informations du stagiaire -->
+    <div class="card" style="text-align:left;margin-bottom:30px;">
+        <div class="card-header">
+            <h2>📋 Récapitulatif</h2>
+        </div>
+        <div class="card-body">
+            <div class="profil-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Matricule</span>
+                    <div style="font-weight:600;">{{ stagiaire.matricule }}</div>
+                </div>
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Genre</span>
+                    <div style="font-weight:600;">{{ stagiaire.get_titre() }}</div>
+                </div>
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Nom complet</span>
+                    <div style="font-weight:600;">{{ stagiaire.prenom }} {{ stagiaire.nom }}</div>
+                </div>
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Email</span>
+                    <div style="font-weight:600;">{{ stagiaire.email }}</div>
+                </div>
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Type de stage</span>
+                    <div style="font-weight:600;">{{ stagiaire.type_stage|capitalize }}</div>
+                </div>
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Période</span>
+                    <div style="font-weight:600;">{{ stagiaire.date_debut.strftime('%d/%m/%Y') }} → {{ stagiaire.date_fin.strftime('%d/%m/%Y') }}</div>
+                </div>
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Dossiers déposés</span>
+                    <div style="font-weight:600;">
+                        <span class="badge badge-{{ 'success' if stagiaire.dossiers_deposes else 'danger' }}">
+                            {{ '✅ Oui' if stagiaire.dossiers_deposes else '❌ Non' }}
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <span style="color:var(--ink-soft);font-size:0.8rem;">Statut</span>
+                    <div style="font-weight:600;">
+                        <span class="badge badge-{{ 'success' if stagiaire.statut == 'actif' else 'danger' }}">
+                            {{ stagiaire.statut }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Boutons d'impression -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px;margin:0 auto;">
+        
+        <!-- NOTIFICATION -->
+        <div class="card" style="cursor:pointer;border-color:var(--primary);" onclick="genererNotification()">
+            <div class="card-body" style="text-align:center;padding:20px;">
+                <div style="font-size:40px;">📄</div>
+                <div style="font-weight:700;margin-top:10px;">Notification de stage</div>
+                <div style="font-size:0.8rem;color:var(--ink-soft);">
+                    {% if stagiaire.dossiers_deposes %}
+                        ✅ Dossiers déposés
+                    {% else %}
+                        ⚠️ Dossiers non déposés
+                    {% endif %}
+                </div>
+                <button class="btn btn-{{ 'primary' if stagiaire.dossiers_deposes else 'warning' }}" 
+                        style="margin-top:10px;width:100%;justify-content:center;"
+                        onclick="event.stopPropagation();genererNotification()">
+                    {{ '📄 Générer' if stagiaire.dossiers_deposes else '⏳ En attente' }}
+                </button>
+            </div>
+        </div>
+        
+        <!-- ATTESTATION -->
+        <div class="card" style="cursor:pointer;border-color:var(--primary);" onclick="genererAttestation()">
+            <div class="card-body" style="text-align:center;padding:20px;">
+                <div style="font-size:40px;">📜</div>
+                <div style="font-weight:700;margin-top:10px;">Attestation de fin de stage</div>
+                <div style="font-size:0.8rem;color:var(--ink-soft);">
+                    {% if stagiaire.dossiers_deposes %}
+                        ✅ Dossiers déposés
+                    {% else %}
+                        ⚠️ Dossiers non déposés
+                    {% endif %}
+                </div>
+                <button class="btn btn-{{ 'primary' if stagiaire.dossiers_deposes else 'warning' }}" 
+                        style="margin-top:10px;width:100%;justify-content:center;"
+                        onclick="event.stopPropagation();genererAttestation()">
+                    {{ '📜 Générer' if stagiaire.dossiers_deposes else '⏳ En attente' }}
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div style="margin-top:30px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="{{ url_for('routes.admin_dashboard') }}" class="btn btn-primary">
+            📊 Retour au tableau de bord
+        </a>
+        <a href="{{ url_for('routes.admin_dashboard') }}" class="btn btn-outline" onclick="event.preventDefault();window.location.reload();">
+            ➕ Ajouter un autre stagiaire
+        </a>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // GÉNÉRER LA NOTIFICATION DE STAGE
+    // ============================================================
+    function genererNotification() {
+        {% if stagiaire.dossiers_deposes %}
+            window.open("{{ url_for('routes.generer_notification', stagiaire_id=stagiaire.id) }}", '_blank');
+        {% else %}
+            alert('⚠️ Veuillez d\'abord confirmer que les dossiers sont déposés.');
+        {% endif %}
+    }
+    
+    // ============================================================
+    // GÉNÉRER L'ATTESTATION DE FIN DE STAGE
+    // ============================================================
+    function genererAttestation() {
+        {% if stagiaire.dossiers_deposes %}
+            window.open("{{ url_for('routes.generer_attestation', stagiaire_id=stagiaire.id) }}", '_blank');
+        {% else %}
+            alert('⚠️ Veuillez d\'abord confirmer que les dossiers sont déposés.');
+        {% endif %}
+    }
+</script>
+{% endblock %}
