@@ -11,5 +11,5 @@ weasyprint==61.2
 flask-mail==0.9.1
 apscheduler==3.10.4
 qrcode==7.4.2
-# Pillow==10.2.0  # Commenté
-# psycopg2-binary==2.9.9  # Supprimé - on utilise SQLite
+psycopg2-binary==2.9.9
+gunicorn==21.2.0
