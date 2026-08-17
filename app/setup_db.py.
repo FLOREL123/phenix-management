@@ -1,0 +1,20 @@
+from app import app, db, User  # Assurez-vous que ces imports correspondent à votre projet
+
+def setup():
+    with app.app_context():
+        # Crée les tables sans supprimer les anciennes
+        db.create_all()
+        
+        # Vérifie si l'admin existe
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            # Création de l'admin (modifiez le mot de passe !)
+            new_admin = User(username='admin', password='votre_mot_de_passe_secret') 
+            db.session.add(new_admin)
+            db.session.commit()
+            print("Base de données initialisée et administrateur créé.")
+        else:
+            print("L'administrateur existe déjà, aucune action nécessaire.")
+
+if __name__ == '__main__':
+    setup()
