@@ -1,0 +1,8 @@
+flask
+flask-sqlalchemy
+flask-login
+flask-mail
+bcrypt
+python-dotenv
+reportlab
+psycopg2-binary

@@ -1,0 +1,39 @@
+# Environnement virtuel
+venv/
+env/
+.venv/
+
+# Base de données
+*.db
+*.sqlite3
+*.sqlite
+
+# Fichiers Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Fichiers d'environnement
+.env
+.env.local
+
+# Fichiers de log
+*.log
+
+# Dossiers d'upload
+uploads/
+exports/
+instance/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers de test
+tests/__pycache__/
+.pytest_cache/
