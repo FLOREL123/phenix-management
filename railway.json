@@ -1,5 +1,5 @@
 {
   "deploy": {
-    "startCommand": "python run"
+    "startCommand": "gunicorn run:app"
   }
 }
